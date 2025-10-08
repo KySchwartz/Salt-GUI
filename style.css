@@ -1,0 +1,167 @@
+
+body {
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #ccc;
+}
+
+.header-left .btn {
+    margin-right: 10px;
+}
+
+.header-right span {
+    margin-left: 20px;
+}
+
+main {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.column {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+h2 {
+    margin-top: 0;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    height: 300px;
+    overflow-y: auto;
+}
+
+li {
+    padding: 10px;
+    cursor: pointer;
+}
+
+li.selected {
+    background-color: #cceeff;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-connect {
+    background-color: #00aaff;
+    color: white;
+}
+
+.btn-disconnect {
+    background-color: #ff4444;
+    color: white;
+}
+
+.btn-deploy {
+    background-color: #00cc66;
+    color: white;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.btn-open-terminal {
+    background-color: #00aaff;
+    color: white;
+}
+
+.btn-refresh {
+    background-color: #00cc66;
+    color: white;
+}
+
+.system-monitoring-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.system-monitoring-output {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    height: 240px;
+    overflow-y: auto;
+}
+
+.system-monitoring-output-header {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+} 
+
+#output-console {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    height: 300px;
+    overflow-y: auto;
+    background-color: #2b2b2b; /* Dark background */
+    color: #f0f0f0; /* Light text */
+    font-family: "Courier New", Courier, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.log-entry .timestamp {
+    color: #888;
+    margin-right: 15px;
+}
+
+.log-entry.log-error {
+    color: #ff8a8a;
+}
+
+.log-entry.log-warn {
+    color: #ffd18a;
+}
+
+.log-entry.log-success {
+    color: #b2f0b2;
+}
+
+/* For the <pre> tag inside logs */
+#output-console pre {
+    margin: 5px 0;
+    padding: 10px;
+    background-color: #3c3c3c;
+    border-radius: 4px;
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}

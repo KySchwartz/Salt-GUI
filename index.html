@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salt GUI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <button class="btn btn-connect">Connect Device</button>
+                <button class="btn btn-disconnect">Disconnect Device</button>
+            </div>
+            <div class="header-right">
+                <span>Devices Connected: 6</span>
+                <span>Running Scripts: 3</span>
+                <span>Server Status: Alive</span>
+            </div>
+        </header>
+        <main>
+            <div class="column">
+                <h2>Available Devices</h2>
+                <p>Click on a device name to select it to run the script<br>Use CTRL+click to select multiple devices</p>
+                <ul id="device-list">
+                    <li>Device #1</li>
+                    <li>Device #2</li>
+                    <li class="selected">Device #3</li>
+                    <li class="selected">Device #4</li>
+                    <li>Device #6</li>
+                </ul>
+            </div>
+            <div class="column">
+                <h2>Available Scripts</h2>
+                <p>Click on a script to select it for deployment<br>Use CTRL+click to select multiple scripts</p>
+                <input type="text" id="script-search" placeholder="Search scripts..." style="width: 95%; margin-bottom: 10px; padding: 5px;">
+                <ul id="script-list">
+                    <li>example_script1.sh</li>
+                    <li>example_script1.ps1</li>
+                    <li class="selected">example_script2.sh</li>
+                    <li>example_script2.ps1</li>
+                    <li>example_script3.sh</li>
+                    <li>example_script3.ps1</li>
+                    <li class="selected">example_script4.sh</li>
+                    <li>example_script4.ps1</li>
+                </ul>
+                <button class="btn btn-deploy">Deploy</button>
+            </div>
+            <div class="column">
+                <h2>System Monitoring</h2>
+                <div class="system-monitoring-controls">
+                    <select>
+                        <option>Select Device to View</option>
+                    </select>
+                    <select>
+                        <option>Select View</option>
+                    </select>
+                    <button class="btn btn-open-terminal">Open Terminal</button>
+                    <button class="btn btn-refresh">Refresh</button>
+                </div>
+                <div class="system-monitoring-output">
+                    <div class="system-monitoring-output-header">
+                        <span>Device Status: N/A</span>
+                        <span>Detected OS: N/A</span>
+                        <span>Running Scripts: N/A</span>
+                    </div>
+                    <div class="system-monitoring-output-content">
+                        <p>This area displays a variety of text based content based on the drop-down selections.</p>
+                        <p>All text in this area will follow the same format regardless of the output selection.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <div id="output-console"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
