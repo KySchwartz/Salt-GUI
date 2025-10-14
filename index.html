@@ -10,8 +10,8 @@
     <div class="container">
         <header>
             <div class="header-left">
-                <button class="btn btn-connect">Connect Device</button>
-                <button class="btn btn-disconnect">Disconnect Device</button>
+                <button class="btn btn-connect">Manage Devices</button>
+                <!--<button class="btn btn-disconnect">Disconnect Device</button>-->
             </div>
             <div class="header-right">
                 <span class="minion-counter">Devices Connected: 0</span>
@@ -85,5 +85,21 @@
         <div id="output-console"></div>
     </div>
     <script src="script.js"></script>
+    <div id="connect-device-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Connect New Devices</h2>
+            <p>The following devices are awaiting key acceptance:</p>
+            <ul id="unaccepted-keys-list">
+                <!-- Unaccepted keys will be populated here -->
+            </ul>
+            <br>
+            <h2>Accepted Devices</h2>
+            <p>The following devices are currently connected:</p>
+            <ul id="accepted-keys-list">
+                <!-- Accepted keys will be populated here -->
+            </ul>
+        </div>
+    </div>
 </body>
 </html>

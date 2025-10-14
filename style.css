@@ -213,3 +213,67 @@ li.selected {
     font-weight: bold;
     border-bottom-color: #cceeff;
 }
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 500px;
+    border-radius: 8px;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#unaccepted-keys-list, #accepted-keys-list {
+    height: 150px; /* Adjust height for two lists */
+}
+
+#unaccepted-keys-list li, #accepted-keys-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+#unaccepted-keys-list li:last-child, #accepted-keys-list li:last-child {
+    border-bottom: none;
+}
+
+.btn-accept {
+    background-color: #28a745; /* Green */
+    color: white;
+}
+
+.btn-remove {
+    background-color: #dc3545; /* Red */
+    color: white;
+}

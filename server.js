@@ -1,4 +1,3 @@
-
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -64,6 +63,99 @@ app.get('/custom-scripts', async (req, res) => {
         console.error('Error fetching custom scripts:', error.response ? error.response.data : error.message);
         res.status(error.response ? error.response.status : 500).json({
             message: 'Error fetching custom scripts from Salt API',
+            error: error.response ? error.response.data : error.message
+        });
+    }
+});
+
+
+// Route to list all minion keys
+app.get('/keys', async (req, res) => {
+    const payload = {
+        client: 'wheel',
+        fun: 'key.list_all',
+        username: 'sysadmin',
+        password: 'Changeme1!',
+        eauth: 'pam'
+    };
+
+    try {
+        const response = await axios.post(`${saltApiUrl}/run`, payload, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error fetching keys:', error.response ? error.response.data : error.message);
+        res.status(error.response ? error.response.status : 500).json({
+            message: 'Error fetching keys from Salt API',
+            error: error.response ? error.response.data : error.message
+        });
+    }
+});
+
+// Route to accept a minion key
+app.post('/keys/accept', async (req, res) => {
+    const { minionId } = req.body;
+
+    if (!minionId) {
+        return res.status(400).json({ message: 'minionId is required' });
+    }
+
+    const payload = {
+        client: 'wheel',
+        fun: 'key.accept',
+        match: minionId,
+        username: 'sysadmin',
+        password: 'Changeme1!',
+        eauth: 'pam'
+    };
+
+    try {
+        const response = await axios.post(`${saltApiUrl}/run`, payload, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        res.json(response.data);
+    } catch (error) {
+        console.error(`Error accepting key for minion ${minionId}:`, error.response ? error.response.data : error.message);
+        res.status(error.response ? error.response.status : 500).json({
+            message: `Error accepting key for minion ${minionId} from Salt API`,
+            error: error.response ? error.response.data : error.message
+        });
+    }
+});
+
+// Route to delete a minion key
+app.post('/keys/delete', async (req, res) => {
+    const { minionId } = req.body;
+
+    if (!minionId) {
+        return res.status(400).json({ message: 'minionId is required' });
+    }
+
+    const payload = {
+        client: 'wheel',
+        fun: 'key.delete',
+        match: minionId,
+        username: 'sysadmin',
+        password: 'Changeme1!',
+        eauth: 'pam'
+    };
+
+    try {
+        const response = await axios.post(`${saltApiUrl}/run`, payload, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        res.json(response.data);
+    } catch (error) {
+        console.error(`Error deleting key for minion ${minionId}:`, error.response ? error.response.data : error.message);
+        res.status(error.response ? error.response.status : 500).json({
+            message: `Error deleting key for minion ${minionId} from Salt API`,
             error: error.response ? error.response.data : error.message
         });
     }

@@ -466,6 +466,129 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const connectDeviceModal = document.getElementById('connect-device-modal');
+    const closeButton = document.querySelector('.close-button');
+    const unacceptedKeysList = document.getElementById('unaccepted-keys-list');
+    const acceptedKeysList = document.getElementById('accepted-keys-list');
+    const modalContent = document.querySelector('.modal-content');
+
+    async function openConnectDeviceModal() {
+        logToConsole('Fetching keys...');
+        try {
+            const response = await fetch(`${proxyUrl}/keys`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(JSON.stringify(errorData.error));
+            }
+            const data = await response.json();
+            const keys = data.return[0].data.return;
+            const unacceptedKeys = keys.minions_pre;
+            const acceptedKeys = keys.minions;
+
+            unacceptedKeysList.innerHTML = ''; // Clear previous list
+            acceptedKeysList.innerHTML = ''; // Clear previous list
+
+            if (unacceptedKeys.length > 0) {
+                unacceptedKeys.forEach(key => {
+                    const li = document.createElement('li');
+                    li.textContent = key;
+                    const acceptButton = document.createElement('button');
+                    acceptButton.textContent = 'Accept';
+                    acceptButton.classList.add('btn', 'btn-accept');
+                    acceptButton.dataset.minionId = key;
+                    li.appendChild(acceptButton);
+                    unacceptedKeysList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'No devices awaiting acceptance.';
+                unacceptedKeysList.appendChild(li);
+            }
+
+            if (acceptedKeys.length > 0) {
+                acceptedKeys.forEach(key => {
+                    const li = document.createElement('li');
+                    li.textContent = key;
+                    const removeButton = document.createElement('button');
+                    removeButton.textContent = 'Remove';
+                    removeButton.classList.add('btn', 'btn-remove');
+                    removeButton.dataset.minionId = key;
+                    li.appendChild(removeButton);
+                    acceptedKeysList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'No accepted devices found.';
+                acceptedKeysList.appendChild(li);
+            }
+
+            connectDeviceModal.style.display = 'block';
+        } catch (error) {
+            console.error('Error fetching keys:', error);
+            logToConsole(`Error fetching keys: ${error.message}`, 'error');
+        }
+    }
+
+    function closeConnectDeviceModal() {
+        connectDeviceModal.style.display = 'none';
+    }
+
+    async function acceptKey(minionId) {
+        logToConsole(`Accepting key for ${minionId}...`);
+        try {
+            const response = await fetch(`${proxyUrl}/keys/accept`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minionId })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to accept key for ${minionId}.`);
+            }
+
+            logToConsole(`Successfully accepted key for ${minionId}.`, 'success');
+            openConnectDeviceModal(); // Refresh the modal
+            fetchAvailableDevices(); // Refresh the main device list
+        } catch (error) {
+            console.error('Error accepting key:', error);
+            logToConsole(`Error accepting key for ${minionId}: ${error.message}`, 'error');
+        }
+    }
+
+    async function removeKey(minionId) {
+        logToConsole(`Removing key for ${minionId}...`);
+        try {
+            const response = await fetch(`${proxyUrl}/keys/delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minionId })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to remove key for ${minionId}.`);
+            }
+
+            logToConsole(`Successfully removed key for ${minionId}.`, 'success');
+            openConnectDeviceModal(); // Refresh the modal
+            fetchAvailableDevices(); // Refresh the main device list
+        } catch (error) {
+            console.error('Error removing key:', error);
+            logToConsole(`Error removing key for ${minionId}: ${error.message}`, 'error');
+        }
+    }
+
+    document.querySelector('.btn-connect').addEventListener('click', openConnectDeviceModal);
+    closeButton.addEventListener('click', closeConnectDeviceModal);
+    modalContent.addEventListener('click', (event) => {
+        if (event.target.classList.contains('btn-accept')) {
+            const minionId = event.target.dataset.minionId;
+            acceptKey(minionId);
+        } else if (event.target.classList.contains('btn-remove')) {
+            const minionId = event.target.dataset.minionId;
+            removeKey(minionId);
+        }
+    });
+
     // --- Initial Load ---
     fetchAvailableDevices();
 });
