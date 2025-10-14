@@ -38,13 +38,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedItems.forEach(selected => selected.classList.remove('selected'));
             }
             item.classList.toggle('selected');
-            
+
+            const selectedScripts = list.querySelectorAll('.selected');
             const scriptType = document.querySelector('input[name="script-type"]:checked').value;
-            if (scriptType === 'salt') {
-                displayScriptArguments(item.textContent);
-            } else {
-                // For custom scripts, clear the arguments section
+
+            if (selectedScripts.length > 1) {
+                // Multiple scripts selected, clear and hide args
                 scriptArgsContainer.innerHTML = '';
+                scriptArgsContainer.style.display = 'none';
+                currentArgSpec = null;
+            } else if (selectedScripts.length === 1) {
+                // Single script selected
+                scriptArgsContainer.style.display = 'block';
+                if (scriptType === 'salt') {
+                    displayScriptArguments(selectedScripts[0].textContent);
+                } else {
+                    // For custom scripts, clear the arguments section
+                    scriptArgsContainer.innerHTML = '';
+                    currentArgSpec = null;
+                }
+            } else {
+                // No scripts selected
+                scriptArgsContainer.innerHTML = '';
+                scriptArgsContainer.style.display = 'block';
                 currentArgSpec = null;
             }
         }
@@ -63,7 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({
                     client: 'local',
                     tgt: '*',
-                    fun: 'test.ping'
+                    fun: 'grains.item',
+                    arg: ['os']
                 })
             });
 
@@ -74,12 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const data = await response.json();
             const minions = (data.return && typeof data.return[0] === 'object' && data.return[0] !== null) ? data.return[0] : {};
-            const activeMinions = Object.keys(minions).filter(minion => minions[minion]);
+            const activeMinions = Object.keys(minions);
             const minionCounter = document.querySelector('.minion-counter');
             minionCounter.textContent = `Devices Connected: ${activeMinions.length}`;
 
             logToConsole(`Found ${activeMinions.length} active minions.`, 'info');
-            updateDeviceList(activeMinions);
+            updateDeviceList(minions);
             logToConsole('Successfully fetched and updated device list.', 'success');
 
             if (activeMinions.length > 0) {
@@ -157,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
             logToConsole('Please ensure at least one device is available to fetch script documentation.', 'warn');
             return;
         }
-        const minionId = firstDevice.textContent;
+        const minionId = firstDevice.dataset.deviceName;
 
         logToConsole(`Fetching arguments for ${scriptName} using sys.argspec...`);
         try {
@@ -275,91 +292,98 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function deployScripts() {
-        const selectedDevices = [...deviceList.querySelectorAll('.selected')].map(item => item.textContent);
-        const selectedScriptItem = scriptList.querySelector('.selected');
+        const selectedDevices = [...deviceList.querySelectorAll('.selected')].map(item => item.dataset.deviceName);
+        const selectedScriptItems = [...scriptList.querySelectorAll('.selected')];
 
         if (selectedDevices.length === 0) {
             logToConsole('Please select at least one device.', 'warn');
             return;
         }
 
-        if (!selectedScriptItem) {
-            logToConsole('Please select a script to deploy.', 'warn');
+        if (selectedScriptItems.length === 0) {
+            logToConsole('Please select at least one script to deploy.', 'warn');
             return;
         }
 
-        const scriptName = selectedScriptItem.textContent;
-        const scriptType = document.querySelector('input[name="script-type"]:checked').value;
-        
-        let payload;
+        for (const scriptItem of selectedScriptItems) {
+            const scriptName = scriptItem.textContent;
+            const scriptType = document.querySelector('input[name="script-type"]:checked').value;
+            
+            let payload;
 
-        if (scriptType === 'custom') {
-            payload = {
-                client: 'local',
-                tgt: selectedDevices,
-                tgt_type: 'list',
-                fun: 'cmd.script',
-                arg: [`salt://${scriptName}`]
-            };
-        } else { // 'salt'
-            payload = {
-                client: 'local',
-                tgt: selectedDevices,
-                tgt_type: 'list',
-                fun: scriptName,
-            };
+            if (scriptType === 'custom') {
+                payload = {
+                    client: 'local',
+                    tgt: selectedDevices,
+                    tgt_type: 'list',
+                    fun: 'cmd.script',
+                    arg: [`salt://${scriptName}`]
+                };
+            } else { // 'salt'
+                payload = {
+                    client: 'local',
+                    tgt: selectedDevices,
+                    tgt_type: 'list',
+                    fun: scriptName,
+                };
 
-            const saltArgs = [];
-            const saltKwargs = {};
-            const argInputs = scriptArgsContainer.querySelectorAll('input');
+                // Only add arguments if a single script is selected
+                if (selectedScriptItems.length === 1) {
+                    const saltArgs = [];
+                    const saltKwargs = {};
+                    const argInputs = scriptArgsContainer.querySelectorAll('input');
 
-            argInputs.forEach(input => {
-                if (input.value) {
-                    if (currentArgSpec && currentArgSpec.args && currentArgSpec.args.includes(input.name)) {
-                        saltArgs.push(input.value);
-                    } else {
-                        saltKwargs[input.name] = input.value;
+                    argInputs.forEach(input => {
+                        if (input.value) {
+                            if (currentArgSpec && currentArgSpec.args && currentArgSpec.args.includes(input.name)) {
+                                saltArgs.push(input.value);
+                            } else {
+                                saltKwargs[input.name] = input.value;
+                            }
+                        }
+                    });
+
+                    if (saltArgs.length > 0) {
+                        payload.arg = saltArgs;
+                    }
+                    if (Object.keys(saltKwargs).length > 0) {
+                        payload.kwarg = saltKwargs;
                     }
                 }
-            });
-
-            if (saltArgs.length > 0) {
-                payload.arg = saltArgs;
-            }
-            if (Object.keys(saltKwargs).length > 0) {
-                payload.kwarg = saltKwargs;
-            }
-        }
-
-        const kwargString = payload.kwarg ? ` with kwargs: ${JSON.stringify(payload.kwarg)}` : '';
-        const argString = payload.arg ? ` with args: ${JSON.stringify(payload.arg)}` : '';
-        logToConsole(`Deploying ${scriptName} to ${selectedDevices.join(', ')}${argString}${kwargString}...`, 'info');
-
-        try {
-            const response = await fetch(`${proxyUrl}/proxy`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`Execution failed: ${errorData.message || response.statusText}`);
             }
 
-            const data = await response.json();
-            logToConsole(`Result for ${scriptName}: <pre>${JSON.stringify(data.return[0], null, 2)}</pre>`, 'success');
-        } catch (error) {
-            console.error(`Error executing ${scriptName}:`, error);
-            logToConsole(`Error executing ${scriptName}: ${error.message}`, 'error');
+            const kwargString = payload.kwarg ? ` with kwargs: ${JSON.stringify(payload.kwarg)}` : '';
+            const argString = payload.arg ? ` with args: ${JSON.stringify(payload.arg)}` : '';
+            logToConsole(`Deploying ${scriptName} to ${selectedDevices.join(', ')}${argString}${kwargString}...`, 'info');
+
+            try {
+                const response = await fetch(`${proxyUrl}/proxy`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`Execution failed: ${errorData.message || response.statusText}`);
+                }
+
+                const data = await response.json();
+                logToConsole(`Result for ${scriptName}: <pre>${JSON.stringify(data.return[0], null, 2)}</pre>`, 'success');
+            } catch (error) {
+                console.error(`Error executing ${scriptName}:`, error);
+                logToConsole(`Error executing ${scriptName}: ${error.message}`, 'error');
+            }
         }
     }
 
-    function updateDeviceList(devices) {
+    function updateDeviceList(minions) {
         deviceList.innerHTML = '';
         selectDevice.innerHTML = '<option>Select a device</option>';
 
-        if (devices.length === 0) {
+        const deviceNames = Object.keys(minions);
+
+        if (deviceNames.length === 0) {
             logToConsole('No active devices found.', 'warn');
             const li = document.createElement('li');
             li.textContent = 'No active devices found';
@@ -368,12 +392,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        devices.forEach(deviceName => {
+        deviceNames.forEach(deviceName => {
+            const os = minions[deviceName] && minions[deviceName]['os'] ? minions[deviceName]['os'] : 'N/A';
+            const displayName = `${deviceName} (${os})`;
+
             const li = document.createElement('li');
-            li.textContent = deviceName;
+            li.textContent = displayName;
+            li.dataset.deviceName = deviceName;
             deviceList.appendChild(li);
+            
             const option = document.createElement('option');
-            option.text = deviceName;
+            option.text = displayName;
+            option.value = deviceName;
             selectDevice.add(option);
         });
     }
@@ -413,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (scriptType === 'salt') {
             const firstDevice = deviceList.querySelector('li:not(.disabled)');
             if (firstDevice) {
-                fetchAvailableScripts(firstDevice.textContent);
+                fetchAvailableScripts(firstDevice.dataset.deviceName);
             } else {
                 logToConsole('Select a device to fetch Salt scripts.', 'warn');
             }
