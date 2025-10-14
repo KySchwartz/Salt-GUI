@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const outputConsole = document.getElementById('output-console');
     const scriptArgsContainer = document.getElementById('script-args-container');
     const scriptTypeSelector = document.getElementById('script-type-selector');
+    const notificationBadge = document.querySelector('.notification-badge');
 
 
     const proxyUrl = 'http://localhost:3000';
@@ -18,6 +19,30 @@ document.addEventListener('DOMContentLoaded', () => {
         logEntry.innerHTML = `<span class="timestamp">${timestamp}</span>${message}`;
         outputConsole.appendChild(logEntry);
         outputConsole.scrollTop = outputConsole.scrollHeight; // Auto-scroll
+    }
+
+    function updateNotificationBadge(count) {
+        if (count > 0) {
+            notificationBadge.textContent = count;
+            notificationBadge.style.display = 'block';
+        } else {
+            notificationBadge.style.display = 'none';
+        }
+    }
+
+    async function checkUnacceptedKeys() {
+        try {
+            const response = await fetch(`${proxyUrl}/keys`);
+            if (!response.ok) {
+                return; // Silently fail, maybe log to console instead of UI
+            }
+            const data = await response.json();
+            const keys = data.return[0].data.return;
+            const unacceptedKeys = keys.minions_pre;
+            updateNotificationBadge(unacceptedKeys.length);
+        } catch (error) {
+            console.error('Error checking unaccepted keys:', error);
+        }
     }
 
     const handleSelection = (list, event) => {
@@ -485,6 +510,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const unacceptedKeys = keys.minions_pre;
             const acceptedKeys = keys.minions;
 
+            updateNotificationBadge(unacceptedKeys.length);
+
             unacceptedKeysList.innerHTML = ''; // Clear previous list
             acceptedKeysList.innerHTML = ''; // Clear previous list
 
@@ -591,4 +618,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initial Load ---
     fetchAvailableDevices();
+    checkUnacceptedKeys();
+    setInterval(checkUnacceptedKeys, 30000); // Check every 30 seconds
 });
