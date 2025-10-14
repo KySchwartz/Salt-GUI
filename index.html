@@ -34,6 +34,12 @@
             <div class="column">
                 <h2>Available Scripts</h2>
                 <p>Click on a script to select it for deployment<br>Use CTRL+click to select multiple scripts</p>
+                <div id="script-type-selector" style="margin-bottom: 10px;">
+                    <input type="radio" id="salt-scripts" name="script-type" value="salt" checked>
+                    <label for="salt-scripts">Salt</label>
+                    <input type="radio" id="custom-scripts" name="script-type" value="custom">
+                    <label for="custom-scripts">Custom</label>
+                </div>
                 <input type="text" id="script-search" placeholder="Search scripts..." style="width: 95%; margin-bottom: 10px; padding: 5px;">
                 <ul id="script-list">
                     <li>example_script1.sh</li>
@@ -45,6 +51,7 @@
                     <li class="selected">example_script4.sh</li>
                     <li>example_script4.ps1</li>
                 </ul>
+                <div id="script-args-container"></div>
                 <button class="btn btn-deploy">Deploy</button>
             </div>
             <div class="column">

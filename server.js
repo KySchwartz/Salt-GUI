@@ -41,6 +41,34 @@ app.post('/proxy', async (req, res) => {
     }
 });
 
+// Route to get custom scripts from the salt-master
+app.get('/custom-scripts', async (req, res) => {
+    const payload = {
+        client: 'runner',
+        fun: 'fileserver.file_list',
+        username: 'sysadmin',
+        password: 'Changeme1!',
+        eauth: 'pam'
+    };
+
+    try {
+        const response = await axios.post(`${saltApiUrl}/run`, payload, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        // The return is a list of files
+        const scripts = response.data.return[0];
+        res.json(scripts);
+    } catch (error) {
+        console.error('Error fetching custom scripts:', error.response ? error.response.data : error.message);
+        res.status(error.response ? error.response.status : 500).json({
+            message: 'Error fetching custom scripts from Salt API',
+            error: error.response ? error.response.data : error.message
+        });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Salt API proxy server listening at http://localhost:${port}`);
 });
