@@ -14,8 +14,8 @@
                 <button class="btn btn-disconnect">Disconnect Device</button>
             </div>
             <div class="header-right">
-                <span>Devices Connected: 6</span>
-                <span>Running Scripts: 3</span>
+                <span class="minion-counter">Devices Connected: 0</span>
+                <span class="running-scripts-counter">Running Scripts: 0</span>
                 <span>Server Status: Alive</span>
             </div>
         </header>
@@ -24,32 +24,35 @@
                 <h2>Available Devices</h2>
                 <p>Click on a device name to select it to run the script<br>Use CTRL+click to select multiple devices</p>
                 <ul id="device-list">
-                    <li>Device #1</li>
+                    <li>No Connected Devices Found</li>
+                    <!--<li>Device #1</li>
                     <li>Device #2</li>
                     <li class="selected">Device #3</li>
                     <li class="selected">Device #4</li>
-                    <li>Device #6</li>
+                    <li>Device #6</li>-->
                 </ul>
             </div>
             <div class="column">
                 <h2>Available Scripts</h2>
                 <p>Click on a script to select it for deployment<br>Use CTRL+click to select multiple scripts</p>
                 <div id="script-type-selector" style="margin-bottom: 10px;">
-                    <input type="radio" id="salt-scripts" name="script-type" value="salt" checked>
-                    <label for="salt-scripts">Salt</label>
-                    <input type="radio" id="custom-scripts" name="script-type" value="custom">
+                    <input type="radio" id="custom-scripts" name="script-type" value="custom" checked>
                     <label for="custom-scripts">Custom</label>
+                    <input type="radio" id="salt-scripts" name="script-type" value="salt">
+                    <label for="salt-scripts">Salt</label>
+
                 </div>
                 <input type="text" id="script-search" placeholder="Search scripts..." style="width: 95%; margin-bottom: 10px; padding: 5px;">
                 <ul id="script-list">
-                    <li>example_script1.sh</li>
+                    <li>No Scripts Found</li>
+                    <!--<li>example_script1.sh</li>
                     <li>example_script1.ps1</li>
                     <li class="selected">example_script2.sh</li>
                     <li>example_script2.ps1</li>
                     <li>example_script3.sh</li>
                     <li>example_script3.ps1</li>
                     <li class="selected">example_script4.sh</li>
-                    <li>example_script4.ps1</li>
+                    <li>example_script4.ps1</li>-->
                 </ul>
                 <div id="script-args-container"></div>
                 <button class="btn btn-deploy">Deploy</button>

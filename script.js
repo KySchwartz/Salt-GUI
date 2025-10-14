@@ -25,17 +25,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (item.tagName !== 'LI') return;
 
         if (list.id === 'device-list') {
-            // Device list remains multi-select with Ctrl key
+            // Device list multi-select with Ctrl key
             if (!event.ctrlKey) {
                 const selectedItems = list.querySelectorAll('.selected');
                 selectedItems.forEach(selected => selected.classList.remove('selected'));
             }
             item.classList.toggle('selected');
         } else if (list.id === 'script-list') {
-            // Script list is now single-select
-            const selectedItems = list.querySelectorAll('.selected');
-            selectedItems.forEach(selected => selected.classList.remove('selected'));
-            item.classList.add('selected');
+            // Script list multi-select with Ctrl key
+            if (!event.ctrlKey) {
+                const selectedItems = list.querySelectorAll('.selected');
+                selectedItems.forEach(selected => selected.classList.remove('selected'));
+            }
+            item.classList.toggle('selected');
             
             const scriptType = document.querySelector('input[name="script-type"]:checked').value;
             if (scriptType === 'salt') {
@@ -73,6 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             const minions = (data.return && typeof data.return[0] === 'object' && data.return[0] !== null) ? data.return[0] : {};
             const activeMinions = Object.keys(minions).filter(minion => minions[minion]);
+            const minionCounter = document.querySelector('.minion-counter');
+            minionCounter.textContent = `Devices Connected: ${activeMinions.length}`;
 
             logToConsole(`Found ${activeMinions.length} active minions.`, 'info');
             updateDeviceList(activeMinions);
