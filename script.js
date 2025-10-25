@@ -66,6 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const selectedScripts = list.querySelectorAll('.selected');
             const scriptType = document.querySelector('input[name="script-type"]:checked').value;
+            
+            // Clear manual inputs when selection changes
+            document.getElementById('manual-args').value = '';
+            document.getElementById('append-command').value = '';
 
             if (selectedScripts.length > 1) {
                 // Multiple scripts selected, clear and hide args
@@ -319,6 +323,11 @@ document.addEventListener('DOMContentLoaded', () => {
     async function deployScripts() {
         const selectedDevices = [...deviceList.querySelectorAll('.selected')].map(item => item.dataset.deviceName);
         const selectedScriptItems = [...scriptList.querySelectorAll('.selected')];
+        const manualArgsInput = document.getElementById('manual-args');
+        const appendCommandInput = document.getElementById('append-command');
+        const errorMessage = document.getElementById('error-message');
+
+        errorMessage.textContent = ''; // Clear previous error messages
 
         if (selectedDevices.length === 0) {
             logToConsole('Please select at least one device.', 'warn');
@@ -330,34 +339,30 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        if (selectedScriptItems.length > 1 && (manualArgsInput.value.trim() !== '' || appendCommandInput.value.trim() !== '')) {
+            errorMessage.textContent = 'Arguments or appended commands can only be provided when a single script is selected.';
+            logToConsole('Arguments or appended commands can only be provided when a single script is selected.', 'error');
+            return;
+        }
+
         for (const scriptItem of selectedScriptItems) {
             const scriptName = scriptItem.textContent;
             const scriptType = document.querySelector('input[name="script-type"]:checked').value;
+            const appendCommand = appendCommandInput.value.trim();
             
             let payload;
+            let saltArgs = [];
+            let saltKwargs = {};
 
-            if (scriptType === 'custom') {
-                payload = {
-                    client: 'local',
-                    tgt: selectedDevices,
-                    tgt_type: 'list',
-                    fun: 'cmd.script',
-                    arg: [`salt://${scriptName}`]
-                };
-            } else { // 'salt'
-                payload = {
-                    client: 'local',
-                    tgt: selectedDevices,
-                    tgt_type: 'list',
-                    fun: scriptName,
-                };
-
-                // Only add arguments if a single script is selected
-                if (selectedScriptItems.length === 1) {
-                    const saltArgs = [];
-                    const saltKwargs = {};
-                    const argInputs = scriptArgsContainer.querySelectorAll('input');
-
+            // Prioritize manual arguments if provided
+            if (manualArgsInput.value.trim() !== '') {
+                logToConsole('Using manual arguments.', 'info');
+                saltArgs = manualArgsInput.value.trim().split(',').map(s => s.trim()).filter(s => s);
+            } else if (selectedScriptItems.length === 1) {
+                // Otherwise, use dynamic fields for single script selections
+                const argInputs = scriptArgsContainer.querySelectorAll('input');
+                if (argInputs.length > 0) {
+                    logToConsole('Using dynamically generated argument fields.', 'info');
                     argInputs.forEach(input => {
                         if (input.value) {
                             if (currentArgSpec && currentArgSpec.args && currentArgSpec.args.includes(input.name)) {
@@ -367,7 +372,53 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
                     });
+                }
+            }
 
+            if (scriptType === 'custom') {
+                const customArgsString = saltArgs.join(' ');
+                
+                if (appendCommand) {
+                    const command = `(salt-call --local cp.get_url salt://${scriptName} - | sh -s -- ${customArgsString}) ${appendCommand}`.trim();
+                    payload = {
+                        client: 'local',
+                        tgt: selectedDevices,
+                        tgt_type: 'list',
+                        fun: 'cmd.run',
+                        arg: [command]
+                    };
+                } else {
+                    payload = {
+                        client: 'local',
+                        tgt: selectedDevices,
+                        tgt_type: 'list',
+                        fun: 'cmd.script',
+                        arg: [`salt://${scriptName}`, customArgsString]
+                    };
+                }
+
+            } else { // 'salt'
+                if (appendCommand) {
+                    // If there's an append command, we must use cmd.run with salt-call
+                    const argsString = saltArgs.map(arg => `'${arg}'`).join(' ');
+                    const kwargsString = Object.entries(saltKwargs).map(([key, value]) => `${key}='${value}'`).join(' ');
+                    const command = `salt-call --local ${scriptName} ${argsString} ${kwargsString} ${appendCommand}`.trim();
+                    
+                    payload = {
+                        client: 'local',
+                        tgt: selectedDevices,
+                        tgt_type: 'list',
+                        fun: 'cmd.run',
+                        arg: [command]
+                    };
+                } else {
+                    // Standard Salt execution
+                    payload = {
+                        client: 'local',
+                        tgt: selectedDevices,
+                        tgt_type: 'list',
+                        fun: scriptName,
+                    };
                     if (saltArgs.length > 0) {
                         payload.arg = saltArgs;
                     }
