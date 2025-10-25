@@ -1,31 +1,77 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const fs = require('fs');
 
 const app = express();
 const port = 3000;
+const CONFIG_PATH = './config.json';
 
 // Middleware to parse JSON bodies and enable CORS
 app.use(cors());
 app.use(express.json());
 app.use(express.static('.')); // Serve static files from the current directory
 
-const saltApiUrl = 'https://salt80.soc-se.org/salt-api'; // Using https as is standard
+// --- Settings Management ---
+
+function readSettings() {
+    try {
+        if (fs.existsSync(CONFIG_PATH)) {
+            const rawData = fs.readFileSync(CONFIG_PATH);
+            return JSON.parse(rawData);
+        } else {
+            // Default settings
+            const defaultSettings = {
+                proxyURL: 'http://localhost:3000',
+                saltAPIUrl: 'https://salt80.soc-se.org/salt-api',
+                username: 'sysadmin',
+                password: 'Changeme1!',
+                eauth: 'pam'
+            };
+            fs.writeFileSync(CONFIG_PATH, JSON.stringify(defaultSettings, null, 2));
+            return defaultSettings;
+        }
+    } catch (error) {
+        console.error('[Server] Error in readSettings:', error);
+        throw error; // Re-throw the error to be caught by the route handler
+    }
+}
+
+app.get('/api/settings', (req, res) => {
+    try {
+        const settings = readSettings();
+        res.json(settings);
+    } catch (error) {
+        res.status(500).json({ message: 'Error reading settings file.', error: error.message });
+    }
+});
+
+app.post('/api/settings', (req, res) => {
+    console.log('[Server] Received settings to save:', req.body);
+    try {
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(req.body, null, 2));
+        res.status(200).json({ message: 'Settings saved successfully.' });
+    } catch (error) {
+        console.error('[Server] Error saving settings:', error);
+        res.status(500).json({ message: 'Failed to save settings.', error: error.message });
+    }
+});
 
 // Proxy route for Salt API commands using tokenless authentication
 app.post('/proxy', async (req, res) => {
     const saltCommand = req.body;
+    const settings = readSettings();
 
     // Combine the command with authentication credentials
     const payload = {
         ...saltCommand,
-        username: 'sysadmin',
-        password: 'Changeme1!',
-        eauth: 'pam'
+        username: settings.username,
+        password: settings.password,
+        eauth: settings.eauth
     };
 
     try {
-        const response = await axios.post(`${saltApiUrl}/run`, payload, {
+        const response = await axios.post(`${settings.saltAPIUrl}/run`, payload, {
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -42,16 +88,17 @@ app.post('/proxy', async (req, res) => {
 
 // Route to get custom scripts from the salt-master
 app.get('/custom-scripts', async (req, res) => {
+    const settings = readSettings();
     const payload = {
         client: 'runner',
         fun: 'fileserver.file_list',
-        username: 'sysadmin',
-        password: 'Changeme1!',
-        eauth: 'pam'
+        username: settings.username,
+        password: settings.password,
+        eauth: settings.eauth
     };
 
     try {
-        const response = await axios.post(`${saltApiUrl}/run`, payload, {
+        const response = await axios.post(`${settings.saltAPIUrl}/run`, payload, {
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -71,16 +118,17 @@ app.get('/custom-scripts', async (req, res) => {
 
 // Route to list all minion keys
 app.get('/keys', async (req, res) => {
+    const settings = readSettings();
     const payload = {
         client: 'wheel',
         fun: 'key.list_all',
-        username: 'sysadmin',
-        password: 'Changeme1!',
-        eauth: 'pam'
+        username: settings.username,
+        password: settings.password,
+        eauth: settings.eauth
     };
 
     try {
-        const response = await axios.post(`${saltApiUrl}/run`, payload, {
+        const response = await axios.post(`${settings.saltAPIUrl}/run`, payload, {
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -98,6 +146,7 @@ app.get('/keys', async (req, res) => {
 // Route to accept a minion key
 app.post('/keys/accept', async (req, res) => {
     const { minionId } = req.body;
+    const settings = readSettings();
 
     if (!minionId) {
         return res.status(400).json({ message: 'minionId is required' });
@@ -107,13 +156,13 @@ app.post('/keys/accept', async (req, res) => {
         client: 'wheel',
         fun: 'key.accept',
         match: minionId,
-        username: 'sysadmin',
-        password: 'Changeme1!',
-        eauth: 'pam'
+        username: settings.username,
+        password: settings.password,
+        eauth: settings.eauth
     };
 
     try {
-        const response = await axios.post(`${saltApiUrl}/run`, payload, {
+        const response = await axios.post(`${settings.saltAPIUrl}/run`, payload, {
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -131,6 +180,7 @@ app.post('/keys/accept', async (req, res) => {
 // Route to delete a minion key
 app.post('/keys/delete', async (req, res) => {
     const { minionId } = req.body;
+    const settings = readSettings();
 
     if (!minionId) {
         return res.status(400).json({ message: 'minionId is required' });
@@ -140,13 +190,13 @@ app.post('/keys/delete', async (req, res) => {
         client: 'wheel',
         fun: 'key.delete',
         match: minionId,
-        username: 'sysadmin',
-        password: 'Changeme1!',
-        eauth: 'pam'
+        username: settings.username,
+        password: settings.password,
+        eauth: settings.eauth
     };
 
     try {
-        const response = await axios.post(`${saltApiUrl}/run`, payload, {
+        const response = await axios.post(`${settings.saltAPIUrl}/run`, payload, {
             headers: {
                 'Content-Type': 'application/json'
             }

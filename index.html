@@ -17,6 +17,7 @@
                 <span class="minion-counter">Devices Connected: 0</span>
                 <span class="running-scripts-counter">Running Scripts: 0</span>
                 <span>Server Status: Alive</span>
+                <span id="settings-icon" class="settings-icon">&#9881;</span>
             </div>
         </header>
         <main>
@@ -110,6 +111,36 @@
             <ul id="accepted-keys-list">
                 <!-- Accepted keys will be populated here -->
             </ul>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span id="settings-close-button" class="close-button">&times;</span>
+            <h2>Settings</h2>
+            <form id="settings-form">
+                <div class="script-arg-item">
+                    <label for="proxyURL">Proxy URL</label>
+                    <input type="text" id="proxyURL" name="proxyURL">
+                </div>
+                <div class="script-arg-item">
+                    <label for="saltAPIUrl">Salt API URL</label>
+                    <input type="text" id="saltAPIUrl" name="saltAPIUrl">
+                </div>
+                <div class="script-arg-item">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username">
+                </div>
+                <div class="script-arg-item">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password">
+                </div>
+                <div class="script-arg-item">
+                    <label for="eauth">Eauth</label>
+                    <input type="text" id="eauth" name="eauth">
+                </div>
+                <button type="submit" class="btn">Save Settings</button>
+            </form>
         </div>
     </div>
 </body>

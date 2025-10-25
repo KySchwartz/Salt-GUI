@@ -6,10 +6,66 @@ document.addEventListener('DOMContentLoaded', () => {
     const scriptArgsContainer = document.getElementById('script-args-container');
     const scriptTypeSelector = document.getElementById('script-type-selector');
     const notificationBadge = document.querySelector('.notification-badge');
+    const settingsIcon = document.getElementById('settings-icon');
+    const settingsModal = document.getElementById('settings-modal');
+    const settingsCloseButton = document.getElementById('settings-close-button');
+    const settingsForm = document.getElementById('settings-form');
 
-
-    const proxyUrl = 'http://localhost:3000';
+    let proxyUrl = 'http://localhost:3000'; // Default value, will be updated from settings
     let currentArgSpec = null; // Variable to cache the argspec
+
+    // --- Settings Management ---
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/settings');
+            const settings = await response.json();
+            document.getElementById('proxyURL').value = settings.proxyURL;
+            document.getElementById('saltAPIUrl').value = settings.saltAPIUrl;
+            document.getElementById('username').value = settings.username;
+            document.getElementById('password').value = settings.password;
+            document.getElementById('eauth').value = settings.eauth;
+            proxyUrl = settings.proxyURL;
+        } catch (error) {
+            console.error('Error loading settings:', error);
+            logToConsole('Error loading settings. Using default values.', 'error');
+        }
+    }
+
+    async function saveSettings(event) {
+        event.preventDefault();
+        const formData = new FormData(settingsForm);
+        const settings = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings),
+            });
+            if (response.ok) {
+                logToConsole('Settings saved successfully.', 'success');
+                settingsModal.style.display = 'none';
+                proxyUrl = settings.proxyURL; // Update proxyUrl after saving
+            } else {
+                logToConsole('Failed to save settings.', 'error');
+            }
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            logToConsole('Error saving settings.', 'error');
+        }
+    }
+
+    settingsIcon.addEventListener('click', () => {
+        settingsModal.style.display = 'block';
+    });
+
+    settingsCloseButton.addEventListener('click', () => {
+        settingsModal.style.display = 'none';
+    });
+
+    settingsForm.addEventListener('submit', saveSettings);
 
     // --- Helper Functions ---
     function logToConsole(message, type = 'info') {
@@ -668,7 +724,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Initial Load ---
-    fetchAvailableDevices();
-    checkUnacceptedKeys();
-    setInterval(checkUnacceptedKeys, 30000); // Check every 30 seconds
+    async function initializeApp() {
+        await loadSettings();
+        fetchAvailableDevices();
+        checkUnacceptedKeys();
+        setInterval(checkUnacceptedKeys, 30000); // Check every 30 seconds
+    }
+
+    initializeApp();
 });
